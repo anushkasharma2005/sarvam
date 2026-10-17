@@ -1,4 +1,4 @@
-# morning-brief
+# cron.brief
 
 A personal assistant that reads overnight Gmail activity and gives you a morning summary. Sarvam AI does the language work.
 

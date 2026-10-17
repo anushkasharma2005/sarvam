@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Morning Brief</title>
+<title>cron.brief</title>
 <style>
   :root { --bg:#0d1117; --panel:#161b22; --line:#30363d; --ink:#c9d1d9; --mute:#7d8590;
           --green:#3fb950; --cyan:#58a6ff; --amber:#d29922; --red:#f85149; }
@@ -40,17 +40,17 @@
   a { color:var(--cyan); }
   .cursor::after { content:"▋"; color:var(--green); animation:blink 1s steps(1) infinite; }
   @keyframes blink { 50% { opacity:0; } }
-  .you { color:var(--cyan); } .you::before { content:"you@brief:~$ "; color:var(--mute); }
+  .you { color:var(--cyan); } .you::before { content:"you@cron.brief:~$ "; color:var(--mute); }
 </style>
 </head>
 <body>
 <main>
   <div class="bar">
     <span class="dot" style="background:#ff5f56"></span><span class="dot" style="background:#ffbd2e"></span><span class="dot" style="background:#27c93f"></span>
-    <span class="title">morning-brief — zsh</span>
+    <span class="title">cron.brief — zsh</span>
   </div>
 
-  <h1>brief --since=yesterday</h1>
+  <h1>cron.brief --since=yesterday</h1>
   <p class="sub">Overnight email, summarized.</p>
 
   <div class="panel">

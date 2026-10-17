@@ -4,7 +4,7 @@ Context for Claude Code working in this repo.
 
 ## What this project is
 
-A personal morning-brief assistant. It reads overnight activity from connected
+A personal morning-brief assistant called **cron.brief**. It reads overnight activity from connected
 sources (currently Gmail) and
 produces a short summary each morning. Planned follow-ons: creating calendar
 events from things mentioned in those messages, and answering questions about

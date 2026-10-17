@@ -1,4 +1,4 @@
-"""Morning brief web app: Gmail -> Sarvam summary, calendar events, voice."""
+"""cron.brief: Gmail -> Sarvam morning summary, calendar events, voice."""
 
 import base64
 import json
