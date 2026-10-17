@@ -1,2 +1,5 @@
 sarvamai
 python-dotenv
+flask
+google-api-python-client
+google-auth-oauthlib

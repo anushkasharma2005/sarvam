@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Morning Brief</title>
+<style>
+  :root { --bg:#faf8f5; --card:#fff; --ink:#1f2933; --mute:#6b7785; --accent:#d9480f; --line:#e7e2da; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#16181b; --card:#1f2226; --ink:#e8eaed; --mute:#98a2ad; --accent:#ff8a5c; --line:#2f343a; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui, sans-serif; }
+  main { max-width:680px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:1.6rem; margin:0 0 4px; }
+  .sub { color:var(--mute); margin:0 0 20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
+  .card h2 { font-size:1rem; margin:0 0 8px; }
+  button, select, input[type=text] { font:inherit; padding:8px 14px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--ink); }
+  button { cursor:pointer; }
+  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  button:disabled { opacity:.5; cursor:wait; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .mute { color:var(--mute); font-size:.9rem; }
+  #summary { white-space:pre-wrap; }
+  .event { border-top:1px solid var(--line); padding:10px 0; }
+  .event:first-of-type { border-top:0; }
+  .err { color:#c92a2a; }
+  a { color:var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Good morning</h1>
+  <p class="sub">What happened while you were away.</p>
+
+  <div class="card">
+    <h2>Sources</h2>
+    <div class="row">
+      {% if connected %}
+        <span>✅ Gmail &amp; Calendar connected</span>
+      {% else %}
+        <a href="/auth"><button>Connect Google</button></a>
+      {% endif %}
+    </div>
+    <p class="mute" style="margin-bottom:6px">WhatsApp: in a chat, tap ⋮ → More → Export chat → Without media, then add the .txt file here. Kept in memory only.</p>
+    <div class="row">
+      <input type="file" id="wa" accept=".txt" multiple>
+      <button id="waClear">Clear</button>
+    </div>
+    <div class="mute" id="waList"></div>
+  </div>
+
+  <div class="row" style="margin-bottom:16px">
+    <button class="primary" id="go">Generate my brief</button>
+    <select id="lang" title="Voice language">
+      <option value="en-IN">English</option><option value="hi-IN">हिन्दी</option>
+      <option value="ta-IN">தமிழ்</option><option value="te-IN">తెలుగు</option>
+      <option value="kn-IN">ಕನ್ನಡ</option><option value="ml-IN">മലയാളം</option>
+      <option value="bn-IN">বাংলা</option><option value="mr-IN">मराठी</option>
+      <option value="gu-IN">ગુજરાતી</option><option value="pa-IN">ਪੰਜਾਬੀ</option>
+    </select>
+    <button id="play" disabled>🔊 Read it to me</button>
+  </div>
+  <div id="status" class="mute"></div>
+
+  <div id="out" hidden>
+    <div class="card"><h2>Summary</h2><div id="summary"></div><div class="mute" id="meta"></div></div>
+    <div class="card" id="replyCard"><h2>Needs a reply</h2><ul id="reply"></ul></div>
+    <div class="card" id="evCard"><h2>Events found</h2><div id="events"></div></div>
+  </div>
+
+  <div class="card">
+    <h2>Ask about your brief</h2>
+    <div class="row">
+      <input type="text" id="q" placeholder="Type, or tap the mic" style="flex:1;min-width:180px">
+      <button id="mic">🎤</button>
+      <button id="ask">Ask</button>
+    </div>
+    <p id="answer" style="margin-bottom:0"></p>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const post = (url, body) => fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body||{})}).then(r => r.json());
+let voiceText = '';
+
+function playB64(b64) { new Audio('data:audio/wav;base64,' + b64).play(); }
+function setBusy(btn, busy) { btn.disabled = busy; }
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+$('wa').onchange = async e => {
+  const fd = new FormData();
+  for (const f of e.target.files) fd.append('files', f);
+  const r = await fetch('/api/whatsapp', {method:'POST', body: fd}).then(r => r.json());
+  $('waList').textContent = r.chats.length ? 'Loaded: ' + r.chats.join(', ') : '';
+};
+$('waClear').onclick = async () => { await post('/api/whatsapp/clear'); $('waList').textContent = ''; $('wa').value = ''; };
+
+$('go').onclick = async () => {
+  setBusy($('go'), true); $('status').textContent = 'Reading your messages…'; $('status').className = 'mute';
+  const r = await post('/api/brief');
+  setBusy($('go'), false);
+  if (r.error) { $('status').textContent = r.error; $('status').className = 'err'; return; }
+  $('status').textContent = '';
+  $('out').hidden = false;
+  $('summary').textContent = r.summary;
+  $('meta').textContent = r.email_count + ' emails read';
+  $('reply').innerHTML = (r.needs_reply || []).map(x => '<li>' + esc(x) + '</li>').join('') || '<li class="mute">Nothing needs a reply.</li>';
+  const evs = r.events || [];
+  $('evCard').hidden = !evs.length;
+  $('events').innerHTML = '';
+  evs.forEach(ev => {
+    const div = document.createElement('div'); div.className = 'event';
+    div.innerHTML = '<b>' + esc(ev.title) + '</b><br><span class="mute">' + esc(ev.start.replace('T',' ')) + ' · from: ' + esc(ev.source || '') + '</span><br>';
+    const b = document.createElement('button'); b.textContent = 'Add to calendar';
+    b.onclick = async () => {
+      b.disabled = true;
+      const res = await post('/api/event', ev);
+      if (res.error) { b.disabled = false; b.textContent = res.error; return; }
+      b.outerHTML = '<a href="' + res.link + '" target="_blank">Added ✓ view</a>';
+    };
+    div.appendChild(b); $('events').appendChild(div);
+  });
+  voiceText = r.voice_summary || r.summary;
+  $('play').disabled = false;
+};
+
+$('play').onclick = async () => {
+  setBusy($('play'), true);
+  const r = await post('/api/tts', {text: voiceText, lang: $('lang').value});
+  setBusy($('play'), false);
+  if (r.audio) playB64(r.audio); else $('status').textContent = 'Voice failed.';
+};
+
+$('ask').onclick = async () => {
+  if (!$('q').value.trim()) return;
+  $('answer').textContent = '…';
+  $('answer').textContent = (await post('/api/ask', {question: $('q').value})).answer;
+};
+
+let rec, chunks = [];
+$('mic').onclick = async () => {
+  if (rec && rec.state === 'recording') { rec.stop(); return; }
+  const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+  rec = new MediaRecorder(stream); chunks = [];
+  rec.ondataavailable = e => chunks.push(e.data);
+  rec.onstop = async () => {
+    stream.getTracks().forEach(t => t.stop());
+    $('mic').textContent = '🎤';
+    const fd = new FormData(); fd.append('audio', new Blob(chunks, {type: rec.mimeType}), 'q.webm');
+    const r = await fetch('/api/stt', {method:'POST', body: fd}).then(r => r.json());
+    if (r.text) { $('q').value = r.text; $('ask').click(); }
+  };
+  rec.start(); $('mic').textContent = '⏹';
+};
+</script>
+</body>
+</html>
