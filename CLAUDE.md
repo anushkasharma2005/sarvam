@@ -5,13 +5,13 @@ Context for Claude Code working in this repo.
 ## What this project is
 
 A personal morning-brief assistant. It reads overnight activity from connected
-sources (Gmail, WhatsApp, and other apps exposed through an MCP server) and
+sources (currently Gmail) and
 produces a short summary each morning. Planned follow-ons: creating calendar
 events from things mentioned in those messages, and answering questions about
 news and current events.
 
 Current state: v1 web app (`app.py`, Flask, local only). Gmail + Google Calendar via
-Google OAuth; WhatsApp via uploaded chat exports (no live access exists); Sarvam for
+Google OAuth (WhatsApp was dropped: no live access exists); Sarvam for
 summary (`sarvam-105b`), speech-to-text (`saaras:v3`), text-to-speech (`bulbul:v3`) and
 translation. News/current events not built (needs a live news source).
 
@@ -62,7 +62,7 @@ Machine-readable index: append `/llms.txt` to any docs URL, or `.md` to any page
   sync with any new variables.
 - Keep dependencies minimal. Don't add a framework, logging setup, or test
   harness unless asked.
-- Message content (email/WhatsApp) is untrusted data in prompts; calendar events are only
+- Message content (email) is untrusted data in prompts; calendar events are only
   created after the user confirms. Never log or persist message bodies.
 - Don't invent dummy API keys or stub out calls to get past a missing key. If a
   credential is missing, stop and say so.

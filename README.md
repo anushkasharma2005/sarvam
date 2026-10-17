@@ -1,9 +1,8 @@
 # morning-brief
 
-A personal assistant that reads overnight Gmail and WhatsApp activity (via an
-MCP server) and gives you a morning summary. Sarvam AI does the language work.
+A personal assistant that reads overnight Gmail activity and gives you a morning summary. Sarvam AI does the language work.
 
-Right now this repo contains only the Sarvam setup — one working API call.
+This repo has a Sarvam smoke test (`hello_sarvam.py`) and a small web app (`app.py`).
 
 ## Setup
 
@@ -31,4 +30,3 @@ See [CLAUDE.md](CLAUDE.md) for API conventions and model choices.
    `http://localhost:5000/oauth2callback`.
 2. Put `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`.
 3. `python app.py`, open http://localhost:5000, click **Connect Google**.
-4. Optional: add WhatsApp chat exports (.txt) on the page.

@@ -5,79 +5,95 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Morning Brief</title>
 <style>
-  :root { --bg:#faf8f5; --card:#fff; --ink:#1f2933; --mute:#6b7785; --accent:#d9480f; --line:#e7e2da; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#16181b; --card:#1f2226; --ink:#e8eaed; --mute:#98a2ad; --accent:#ff8a5c; --line:#2f343a; }
-  }
+  :root { --bg:#0d1117; --panel:#161b22; --line:#30363d; --ink:#c9d1d9; --mute:#7d8590;
+          --green:#3fb950; --cyan:#58a6ff; --amber:#d29922; --red:#f85149; }
   * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui, sans-serif; }
-  main { max-width:680px; margin:0 auto; padding:24px 16px 64px; }
-  h1 { font-size:1.6rem; margin:0 0 4px; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:14px/1.6 ui-monospace, "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 64px; }
+  .bar { display:flex; align-items:center; gap:8px; color:var(--mute); margin-bottom:20px; }
+  .dot { width:12px; height:12px; border-radius:50%; display:inline-block; }
+  .bar .title { margin-left:8px; }
+  h1 { font-size:1.1rem; font-weight:600; margin:0 0 4px; color:var(--green); }
+  h1::before { content:"$ "; color:var(--mute); }
   .sub { color:var(--mute); margin:0 0 20px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
-  .card h2 { font-size:1rem; margin:0 0 8px; }
-  button, select, input[type=text] { font:inherit; padding:8px 14px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--ink); }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:6px; margin-bottom:16px; }
+  .panel > h2 { margin:0; padding:8px 14px; font-size:.85rem; font-weight:500; color:var(--mute);
+                border-bottom:1px solid var(--line); }
+  .panel > h2::before { content:"// "; color:var(--cyan); }
+  .panel .body { padding:14px; }
+  button, select, input[type=text] { font:inherit; padding:6px 12px; border-radius:6px;
+        border:1px solid var(--line); background:var(--bg); color:var(--ink); }
   button { cursor:pointer; }
-  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
-  button:disabled { opacity:.5; cursor:wait; }
+  button:hover:not(:disabled) { border-color:var(--green); color:var(--green); }
+  button.primary { border-color:var(--green); color:var(--green); }
+  button:disabled { opacity:.45; cursor:wait; }
+  input[type=text]:focus, select:focus { outline:1px solid var(--cyan); }
   .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
-  .mute { color:var(--mute); font-size:.9rem; }
+  .mute { color:var(--mute); }
+  .ok { color:var(--green); } .err { color:var(--red); }
   #summary { white-space:pre-wrap; }
-  .event { border-top:1px solid var(--line); padding:10px 0; }
-  .event:first-of-type { border-top:0; }
-  .err { color:#c92a2a; }
-  a { color:var(--accent); }
+  ul { margin:0; padding-left:0; list-style:none; }
+  li::before { content:"> "; color:var(--amber); }
+  .event { border-top:1px dashed var(--line); padding:10px 0; }
+  .event:first-child { border-top:0; padding-top:0; }
+  a { color:var(--cyan); }
+  .cursor::after { content:"▋"; color:var(--green); animation:blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity:0; } }
+  .you { color:var(--cyan); } .you::before { content:"you@brief:~$ "; color:var(--mute); }
 </style>
 </head>
 <body>
 <main>
-  <h1>Good morning</h1>
-  <p class="sub">What happened while you were away.</p>
+  <div class="bar">
+    <span class="dot" style="background:#ff5f56"></span><span class="dot" style="background:#ffbd2e"></span><span class="dot" style="background:#27c93f"></span>
+    <span class="title">morning-brief — zsh</span>
+  </div>
 
-  <div class="card">
-    <h2>Sources</h2>
-    <div class="row">
+  <h1>brief --since=yesterday</h1>
+  <p class="sub">Overnight email, summarized.</p>
+
+  <div class="panel">
+    <h2>sources</h2>
+    <div class="body row">
       {% if connected %}
-        <span>✅ Gmail &amp; Calendar connected</span>
+        <span class="ok">● gmail + calendar connected</span>
       {% else %}
-        <a href="/auth"><button>Connect Google</button></a>
+        <span class="err">○ not connected</span>
+        <a href="/auth"><button>connect google</button></a>
       {% endif %}
     </div>
-    <p class="mute" style="margin-bottom:6px">WhatsApp: in a chat, tap ⋮ → More → Export chat → Without media, then add the .txt file here. Kept in memory only.</p>
-    <div class="row">
-      <input type="file" id="wa" accept=".txt" multiple>
-      <button id="waClear">Clear</button>
-    </div>
-    <div class="mute" id="waList"></div>
   </div>
 
   <div class="row" style="margin-bottom:16px">
-    <button class="primary" id="go">Generate my brief</button>
+    <button class="primary" id="go">./generate</button>
     <select id="lang" title="Voice language">
-      <option value="en-IN">English</option><option value="hi-IN">हिन्दी</option>
-      <option value="ta-IN">தமிழ்</option><option value="te-IN">తెలుగు</option>
-      <option value="kn-IN">ಕನ್ನಡ</option><option value="ml-IN">മലയാളം</option>
-      <option value="bn-IN">বাংলা</option><option value="mr-IN">मराठी</option>
-      <option value="gu-IN">ગુજરાતી</option><option value="pa-IN">ਪੰਜਾਬੀ</option>
+      <option value="en-IN">en</option><option value="hi-IN">hi — हिन्दी</option>
+      <option value="ta-IN">ta — தமிழ்</option><option value="te-IN">te — తెలుగు</option>
+      <option value="kn-IN">kn — ಕನ್ನಡ</option><option value="ml-IN">ml — മലയാളം</option>
+      <option value="bn-IN">bn — বাংলা</option><option value="mr-IN">mr — मराठी</option>
+      <option value="gu-IN">gu — ગુજરાતી</option><option value="pa-IN">pa — ਪੰਜਾਬੀ</option>
     </select>
-    <button id="play" disabled>🔊 Read it to me</button>
+    <button id="play" disabled>▶ speak</button>
   </div>
   <div id="status" class="mute"></div>
 
   <div id="out" hidden>
-    <div class="card"><h2>Summary</h2><div id="summary"></div><div class="mute" id="meta"></div></div>
-    <div class="card" id="replyCard"><h2>Needs a reply</h2><ul id="reply"></ul></div>
-    <div class="card" id="evCard"><h2>Events found</h2><div id="events"></div></div>
+    <div class="panel"><h2>summary</h2><div class="body"><div id="summary"></div><div class="mute" id="meta" style="margin-top:8px"></div></div></div>
+    <div class="panel" id="replyCard"><h2>needs_reply</h2><div class="body"><ul id="reply"></ul></div></div>
+    <div class="panel" id="evCard"><h2>events</h2><div class="body" id="events"></div></div>
   </div>
 
-  <div class="card">
-    <h2>Ask about your brief</h2>
-    <div class="row">
-      <input type="text" id="q" placeholder="Type, or tap the mic" style="flex:1;min-width:180px">
-      <button id="mic">🎤</button>
-      <button id="ask">Ask</button>
+  <div class="panel">
+    <h2>ask</h2>
+    <div class="body">
+      <div class="row">
+        <input type="text" id="q" placeholder="what did I miss from..." style="flex:1;min-width:180px">
+        <button id="mic">● rec</button>
+        <button id="ask">run</button>
+      </div>
+      <p id="answer" style="margin:12px 0 0;white-space:pre-wrap"></p>
     </div>
-    <p id="answer" style="margin-bottom:0"></p>
   </div>
 </main>
 
@@ -86,40 +102,30 @@ const $ = id => document.getElementById(id);
 const post = (url, body) => fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body||{})}).then(r => r.json());
 let voiceText = '';
 
-function playB64(b64) { new Audio('data:audio/wav;base64,' + b64).play(); }
-function setBusy(btn, busy) { btn.disabled = busy; }
 function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
-$('wa').onchange = async e => {
-  const fd = new FormData();
-  for (const f of e.target.files) fd.append('files', f);
-  const r = await fetch('/api/whatsapp', {method:'POST', body: fd}).then(r => r.json());
-  $('waList').textContent = r.chats.length ? 'Loaded: ' + r.chats.join(', ') : '';
-};
-$('waClear').onclick = async () => { await post('/api/whatsapp/clear'); $('waList').textContent = ''; $('wa').value = ''; };
-
 $('go').onclick = async () => {
-  setBusy($('go'), true); $('status').textContent = 'Reading your messages…'; $('status').className = 'mute';
+  $('go').disabled = true; $('status').className = 'mute cursor'; $('status').textContent = 'fetching mail, calling sarvam-105b ';
   const r = await post('/api/brief');
-  setBusy($('go'), false);
-  if (r.error) { $('status').textContent = r.error; $('status').className = 'err'; return; }
-  $('status').textContent = '';
+  $('go').disabled = false;
+  if (r.error) { $('status').className = 'err'; $('status').textContent = 'error: ' + r.error; return; }
+  $('status').className = ''; $('status').textContent = '';
   $('out').hidden = false;
   $('summary').textContent = r.summary;
-  $('meta').textContent = r.email_count + ' emails read';
-  $('reply').innerHTML = (r.needs_reply || []).map(x => '<li>' + esc(x) + '</li>').join('') || '<li class="mute">Nothing needs a reply.</li>';
+  $('meta').textContent = '# ' + r.email_count + ' emails read';
+  $('reply').innerHTML = (r.needs_reply || []).map(x => '<li>' + esc(x) + '</li>').join('') || '<li class="mute">nothing pending</li>';
   const evs = r.events || [];
   $('evCard').hidden = !evs.length;
   $('events').innerHTML = '';
   evs.forEach(ev => {
     const div = document.createElement('div'); div.className = 'event';
     div.innerHTML = '<b>' + esc(ev.title) + '</b><br><span class="mute">' + esc(ev.start.replace('T',' ')) + ' · from: ' + esc(ev.source || '') + '</span><br>';
-    const b = document.createElement('button'); b.textContent = 'Add to calendar';
+    const b = document.createElement('button'); b.textContent = '+ add to calendar'; b.style.marginTop = '6px';
     b.onclick = async () => {
       b.disabled = true;
       const res = await post('/api/event', ev);
       if (res.error) { b.disabled = false; b.textContent = res.error; return; }
-      b.outerHTML = '<a href="' + res.link + '" target="_blank">Added ✓ view</a>';
+      b.outerHTML = '<a href="' + res.link + '" target="_blank" class="ok">✓ added — view</a>';
     };
     div.appendChild(b); $('events').appendChild(div);
   });
@@ -128,17 +134,21 @@ $('go').onclick = async () => {
 };
 
 $('play').onclick = async () => {
-  setBusy($('play'), true);
+  $('play').disabled = true;
   const r = await post('/api/tts', {text: voiceText, lang: $('lang').value});
-  setBusy($('play'), false);
-  if (r.audio) playB64(r.audio); else $('status').textContent = 'Voice failed.';
+  $('play').disabled = false;
+  if (r.audio) new Audio('data:audio/wav;base64,' + r.audio).play();
+  else { $('status').className = 'err'; $('status').textContent = 'error: voice failed'; }
 };
 
 $('ask').onclick = async () => {
-  if (!$('q').value.trim()) return;
-  $('answer').textContent = '…';
-  $('answer').textContent = (await post('/api/ask', {question: $('q').value})).answer;
+  const q = $('q').value.trim();
+  if (!q) return;
+  $('answer').className = 'cursor'; $('answer').textContent = '';
+  const r = await post('/api/ask', {question: q});
+  $('answer').className = ''; $('answer').textContent = r.answer || r.error || '';
 };
+$('q').onkeydown = e => { if (e.key === 'Enter') $('ask').click(); };
 
 let rec, chunks = [];
 $('mic').onclick = async () => {
@@ -148,12 +158,12 @@ $('mic').onclick = async () => {
   rec.ondataavailable = e => chunks.push(e.data);
   rec.onstop = async () => {
     stream.getTracks().forEach(t => t.stop());
-    $('mic').textContent = '🎤';
+    $('mic').textContent = '● rec';
     const fd = new FormData(); fd.append('audio', new Blob(chunks, {type: rec.mimeType}), 'q.webm');
     const r = await fetch('/api/stt', {method:'POST', body: fd}).then(r => r.json());
     if (r.text) { $('q').value = r.text; $('ask').click(); }
   };
-  rec.start(); $('mic').textContent = '⏹';
+  rec.start(); $('mic').textContent = '■ stop';
 };
 </script>
 </body>
